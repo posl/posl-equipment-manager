@@ -8,7 +8,10 @@
 
 ![text](./docs/er.png)
 
-| テーブル名 | 定義         |
-| ---------- | ------------ |
-| user       | ユーザー情報 |
-| equipment  | 物品情報     |
+| テーブル名         | 定義                   |
+| ------------------ | ---------------------- |
+| USERS              | ユーザー情報           |
+| EQUIPMENTS         | 物品情報               |
+| ASSET_CATEGORIES   | 物品カテゴリ           |
+| EQUIPMENTS_HISTORY | 物品の貸し出し等の履歴 |
+| BUDGETS            | 予算情報               |
