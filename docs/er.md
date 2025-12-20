@@ -10,6 +10,7 @@
       - [カラムの取りうる値](#カラムの取りうる値)
     - [物品履歴テーブル](#物品履歴テーブル)
       - [カラムの取りうる値](#カラムの取りうる値-1)
+      - [JSON 形式のデータ例](#json-形式のデータ例)
   - [ER 図](#er-図)
 
 ## データベース情報
@@ -83,32 +84,53 @@
   - borrowed: 使用中
   - broken: 故障 or 廃棄予定
   - disposed: 廃棄
--
 
 ### 物品履歴テーブル
 
 - **論理名**: 物品履歴
 - **物理名**: EQUIPMENT_HISTORY
 
-| カラム物理名 | カラム論理名      | データ型 | 凡例                | PK  | FK  | ユニーク制約 | 備考                |
-| ------------ | ----------------- | -------- | ------------------- | --- | --- | ------------ | ------------------- |
-| history_id   | 物品履歴 ID       | INTEGER  | 5001                | ○   |     |              | AUTO_INCREMENT      |
-| equipment_id | 物品 ID           | INTEGER  | 3                   |     | ○   |              |                     |
-| event_type   | イベント種別      | VARCHAR  | assign              |     |     |              |                     |
-| old_value    | 変更前情報        | ENUM     | available"          |     |     |              |                     |
-| new_value    | 変更後情報        | ENUM     | borrowed"           |     |     |              |                     |
-| changed_by   | 操作者ユーザー ID | INTEGER  | 1                   |     | ○   |              |                     |
-| event_at     | 変更日時          | DATETIME | 2023-05-01 10:00:00 |     |     |              | yyyy-mm-dd hh:mm:ss |
+| カラム物理名   | カラム論理名       | データ型 | 凡例                | PK  | FK  | ユニーク制約 | 備考                |
+| -------------- | ------------------ | -------- | ------------------- | --- | --- | ------------ | ------------------- |
+| history_id     | 物品履歴 ID        | INTEGER  | 5001                | ○   |     | ○            | AUTO_INCREMENT      |
+| request_id     | リクエスト ID      | VARCHAR  | vdsainsdknskd       |     |     |              |                     |
+| request_type   | リクエスト種別     | ENUM     | assign              |     |     |              |                     |
+| request_status | リクエスト成功可否 | ENUM     | success             |     |     |              |                     |
+| error_code     | エラーコード       | ENUM     | NOT_FOUND           |     |     |              |                     |
+| equipment_id   | 物品 ID            | INTEGER  | 3                   |     | ○   |              |                     |
+| old_value      | 変更前情報         | JSON     | 下記参照            |     |     |              |                     |
+| new_value      | 変更後情報         | JSON     | 下記参照            |     |     |              |                     |
+| changed_by     | 操作者ユーザー ID  | INTEGER  | 1                   |     | ○   |              |                     |
+| request_at     | 変更日時           | DATETIME | 2023-05-01 10:00:00 |     |     |              | yyyy-mm-dd hh:mm:ss |
 
 #### カラムの取りうる値
 
-- event_type
+- request_type
+
   - assign: 登録
   - lend: 貸し出し
   - change: 使用者変更
   - return: 返却
   - break: 故障 or 廃棄予定
   - dispose: 廃棄
+
+- request_status
+
+  - success: 成功
+  - rejected: ルール上の拒否 (使用中物品の貸し出し操作など)
+  - failed: システム上の失敗
+
+- error_code
+  - NULL: エラーなし
+  - NOT_FOUND: 物品が見つからない
+  - ALREADY BOLLWED: すでに貸し出しされている
+
+#### JSON 形式のデータ例
+
+- old_value (new_value)
+  - status (string): borrowed
+  - user_id (integer): 2
+  - place (string): TTM3
 
 ## ER 図
 
@@ -158,12 +180,15 @@ erDiagram
 
     EQUIPMENT_HISTORY {
         INTEGER history_id PK "AUTO_INCREMENT"
+        VARCHAR request_id "リクエストID"
+        ENUM request_type "リクエストのタイプ"
+        ENUM request_status "リクエストの成功可否"
+        ENUM error_code "エラーコード"
         INTEGER equipment_id FK "-> 物品ID: equipments.equipment_id"
-        VARCHAR event_type "イベントのタイプ"
         ENUM old_value "前の物品状態"
         ENUM new_value "新しい物品状態: equipments.status"
         INTEGER changed_by FK "-> 物品に対して操作を行った人: users.user_id"
-        DATETIME event_at "変更日時"
+        DATETIME request_at "変更日時"
     }
 
 ```
