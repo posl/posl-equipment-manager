@@ -6,7 +6,7 @@
 
 ## 機能詳細
 
-Slack から返却メッセージを送信し，物品を返却する
+Slack から返却メッセージを送信し，物品を返却する．
 
 ## シーケンス図
 
@@ -21,97 +21,82 @@ sequenceDiagram
     participant Queue as キュー/ジョブワーカー
     participant Admin as 管理者通知
 
-    %% 1. Slack受信 -> ACK
+    %% 1. Slackでリクエスト送信
     ユーザー ->> Slack: 返却メッセージを送信
-    Slack ->> SlackApp: イベント送信
-    SlackApp -->> Slack: 200 OK (ACK)  -- note: 即時応答
+    Slack ->> SlackApp: リクエスト送信
+    SlackApp ->> SlackApp: request_idを生成
+    SlackApp -->> Slack: 200 OK (ACK)でリクエストを受け付けたことを知らせる
 
     %% 2. リクエスト受け取り
-    SlackApp ->> Controller: 返却リクエスト (user_id, public_id, req_id, condition)
+    SlackApp ->> Controller: 返却リクエスト (request_id, request_user_id, category, category_index)
+    Controller ->> DB: SELECT 1 FROM equipment_history WHERE request_id = ?
+    alt 既に存在
+        Controller ->> SlackApp: "このリクエストは既に処理されています"
+    end
 
-    %% 3. 同期確認: Sheet vs DB
+    %% 3. 貸し出し対象の物品IDを取得
+    Controller ->> DB: SELECT equipment_id FROM equipments WHERE category=? AND category_index=?
+    alt 物品が存在しない
+        Controller ->> DB: INSERT INTO equipment_history (request_id, equipment_id, request_type: return, response_status, error_code, response_massage, old_value, new_value,changed_by: request_user_id, request_at) -- rejected: RULE_NOT_FOUND
+        Controller ->> SlackApp: "物品が存在しないため，返却ができません"
+    end
+
+    %% 4. 同期確認: スプレッドシートと DB の最新タイムスタンプを取得し，比較
     Controller ->> Sheet: get_last_updated_timestamp()
     Sheet -->> Controller: sheet_ts
-    Controller ->> DB: SELECT MAX(event_at) FROM equipment_history WHERE equipment_id = ?  -- latest_history_ts
+    Controller ->> DB: SELECT MAX(request_at) FROM equipment_history WHERE equipment_id = ?  -- latest_history_ts
     DB -->> Controller: latest_history_ts
 
-    alt sheet_ts > latest_history_ts (シートが新しい)
-        Controller ->> Sheet: download_latest_equipment_row(public_id)
+    alt sheet_ts > latest_history_ts
+        %% sheet -> DB 同期
+        Controller ->> Sheet: download_latest_equipment_row(equipment_id)
         Sheet -->> Controller: equipment_row_data
         Controller ->> DB: BEGIN TRANSACTION
         Controller ->> DB: MERGE/UPDATE equipments USING equipment_row_data
-        Controller ->> DB: INSERT INTO equipment_history (...) -- record sync from sheet
-        Controller ->> DB: COMMIT
-        Controller ->> SlackApp: "同期完了（Sheet→DB）。返却処理を続行します。"
-    else latest_history_ts > sheet_ts (DBが新しい)
-        Controller ->> DB: SELECT equipment_row_data FROM equipments WHERE public_id = ?
-        DB -->> Controller: equipment_row_data
-        Controller ->> Sheet: update_row(public_id, equipment_row_data)
-        alt Sheet 更新成功
-            Sheet -->> Controller: OK
-            Controller ->> SlackApp: "同期完了（DB→Sheet）。返却処理を続行します。"
-        else Sheet 更新失敗
-            Controller ->> Queue: enqueue_retry_sync(public_id, equipment_row_data, req_id)
-            Queue ->> Admin: 同期失敗アラート (public_id, req_id)
-            Controller ->> SlackApp: "同期に問題が発生しましたが、DBは最新です。返却処理を続行します。"
-        end
-    else
-        Controller ->> SlackApp: "データは同期済み。返却処理を続行します。"
-    end
-
-    %% 4. 返却処理（排他ロック + 検証）
-    Controller ->> DB: BEGIN TRANSACTION
-    Controller ->> DB: SELECT * FROM equipments WHERE public_id = ? FOR UPDATE
-    DB -->> Controller: equipment_row
-    alt 物品が存在しない
-        Controller ->> DB: ROLLBACK
-        Controller ->> SlackApp: 返却不可（存在しない）
-        Controller ->> DB: INSERT INTO equipment_history (...) -- record failed return attempt
-    else
-        %% 返却者検証（貸出者と一致するか or 管理者権限）
-        Controller ->> DB: check current user_id (equipment_row.user_id)
-        alt requestor != equipment_row.user_id and not is_admin(requestor)
+        alt DB 更新成功
+            Controller ->> DB: INSERT INTO equipment_history (request_id, equipment_id, request_type: sync, response_status, error_code, response_massage, old_value, new_value,changed_by: system, request_at) -- success: NONE
+            Controller ->> DB: COMMIT
+            Controller ->> Admin: "同期完了（Sheet→DB）しました．貸し出し処理を続行します．"
+        else DB 更新失敗
             Controller ->> DB: ROLLBACK
-            Controller ->> SlackApp: 返却不可（権限不足）
-            Controller ->> DB: INSERT INTO equipment_history (...) -- record unauthorized attempt
-        else
-            %% 状態確認（現在貸出中であること）
-            Controller ->> DB: if equipment_row.status != 'borrowed' then rollback & reply
-            alt equipment_row.status != 'borrowed'
-                Controller ->> DB: ROLLBACK
-                Controller ->> SlackApp: 返却不可（現在貸出中ではない）
-                Controller ->> DB: INSERT INTO equipment_history (...) -- record inconsistency
-            else
-                %% オプション: 返却時の状態確認（破損/遅延）
-                opt check_condition_and_late_fee
-                    Controller ->> Controller: calculate late_fee, damage_flag using due_date and condition
-                end
-
-                %% 実際の更新：状態をavailableに戻す、使用者クリア、返却日時など
-                Controller ->> DB: UPDATE equipments SET status='available', user_id=NULL, last_returned_by=?, last_returned_at=NOW(), updated_at=NOW() WHERE id=?
-                Controller ->> DB: INSERT INTO equipment_history (equipment_id, event_type, old_value, new_value, changed_by, event_at, notes) VALUES (...)
-                Controller ->> DB: COMMIT
-
-                Controller ->> SlackApp: 返却完了(成功) -- include late_fee/damage info if any
-
-                %% 5. スプレッドシート同期は非同期キューへ
-                Controller ->> Queue: enqueue "sync_sheet" (equipment_id, req_id)
-                alt damage_flag == true
-                    Queue ->> Admin: 破損報告アラート (equipment_id, req_id, details)
-                end
-            end
+            Controller ->> DB: INSERT INTO equipment_history (request_id, equipment_id, request_type: sync, response_status, error_code, response_massage, old_value, new_value,changed_by: system, request_at) -- error: SYS_SHEET_SYNC_ERROR
+            Controller ->> Admin: "同期失敗（Sheet→DB）しました．貸し出し処理を中断します．"
         end
+    else
+        %% 同期済み
+        Controller ->> Admin: "データは同期済みです．"
     end
 
-    %% 6. キューワーカーでスプレッドシート同期（非同期）
-    Queue ->> Sheet: 更新要求 (equipment_id, new_state)
+    %% 5. 返却処理を実行
+    Controller ->> DB: BEGIN TRANSACTION
+    Controller ->> DB: SELECT * FROM equipments WHERE equipment_id = ? FOR UPDATE
+    DB -->> Controller: equipment_row
+    Controller ->> DB: check status & user_id
+    alt status != 'borrowed'
+        Controller ->> DB: INSERT INTO equipment_history (request_id, equipment_id, request_type: return, response_status, error_code, response_massage, old_value, new_value,changed_by: request_user_id, request_at) -- rejected: RULE_NOT_BORROWED
+        Controller ->> SlackApp: "{category}{category_index}返却: 現在未使用なので，返却できません．"
+    else status == 'borrowed' AND user_id != request_user_id
+        Controller ->> DB: INSERT INTO equipment_history (request_id, equipment_id, request_type: return, response_status, error_code, response_massage, old_value, new_value,changed_by: request_user_id, request_at) -- rejected: RULE_NOT_OWNER
+        Controller ->> SlackApp: "{category}{category_index}貸し出し: 使用者本人が返却してください．"
+    else status == 'borrowed' AND user_id == request_user_id
+        Controller ->> DB: UPDATE equipments SET status='available', user_id=?, updated_at=NOW()
+        Controller ->> DB: INSERT INTO equipment_history (request_id, equipment_id, request_type: return, response_status, error_code, response_massage, old_value, new_value,changed_by: request_user_id, request_at) -- success: NONE
+        Controller ->> SlackApp: "{category}{category_index}返却: {slack_name} -> 【未使用】"
+        %% スプレッドシートは非同期で更新
+        Controller ->> Queue: enqueue "sync_sheet" (request_id, equipment_id)
+    Controller ->> DB: COMMIT
+    end
+
+    %% 6. スプレッドシート同期
+    Queue ->> Sheet: 更新要求 (request_id, equipment_id, new_state)
     alt Sheet 更新成功
-        Sheet -->> Queue: OK
+        Queue ->> DB: INSERT INTO equipment_history (request_id, equipment_id, request_type: sync, response_status, error_code, response_massage, old_value, new_value, changed_by: system, request_at) -- success: NONE
+        Queue ->> Admin: "物品ID{equipment_id}: DB <-> スプレッドシート間の操作後同期に成功しました．"
     else Sheet 更新失敗
         Queue -->> Queue: retry backoff (n回)
         alt retry exhausted
-            Queue ->> Admin: 同期失敗アラート (equipment_id, err, req_id)
-            Queue ->> Controller: "同期失敗だがDBは更新済み"（オプションでユーザー通知）
+            Queue ->> DB: INSERT INTO equipment_history (request_id, equipment_id, request_type: sync, response_status, error_code, response_massage, old_value, new_value,changed_by: system, request_at) -- error: SYS_SHEET_SYNC_ERROR
+            Queue ->> Admin: "物品ID{equipment_id}: DB <-> スプレッドシート間の操作後同期に失敗しました．"
         end
     end
 
