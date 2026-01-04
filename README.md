@@ -4,6 +4,15 @@
 
 現在 POSL では，物品管理係は私含め 2 人いるが，管理が追いついていないのが現状である．物品管理の属人化を解消するため，Slack App による物品管理自動化ツールを作成する．
 
+## 開発ドキュメント
+
+- [ER 図・DB 設計書](./docs/er.md)
+- [アーキテクチャ](./docs/architecture.md)
+- [貸出シーケンス](./docs/sequence_borrow.md)
+- [返却シーケンス](./docs/sequence_return.md)
+- [登録シーケンス](./docs/sequence_regist.md)
+- [情報更新シーケンス](./docs/sequence_update.md)
+
 ## 機能要件
 
 - Slack から物品を登録する
@@ -32,15 +41,18 @@
 
 ![text](./assets/er.png)
 
-## シーケンス図
+## 使用技術スタック（予定）
 
-## 技術スタック（予定）
+- **バックエンド**: Python 3.12
+- **データベース**: SQLite
+- **Slack クライアント**: slack-bolt
+- **非同期処理**: Celery or RQ（未定）
+- **スプレッドシート**: gspread
+- **テスト**: pytest
+- **リンター**: ruff
+- **フォーマッター**: black
 
-- バックエンド：Python
-- データベース：sqlite
-- インフラ：Slack App，Slack Workflow，Docker
-
-## 今後の展望
+## 今後の開発展望
 
 1. 機能要件，データベース設計，シーケンス図の作成
 2. API 等の仕様書の作成

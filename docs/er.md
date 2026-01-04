@@ -7,11 +7,11 @@
     - [物品カテゴリテーブル](#物品カテゴリテーブル)
     - [予算テーブル](#予算テーブル)
     - [物品テーブル](#物品テーブル)
-      - [\* category と category\_index のユニーク制約](#-category-と-category_index-のユニーク制約)
+      - [\* category と category_index のユニーク制約](#-category-と-category_index-のユニーク制約)
       - [カラムの取りうる値](#カラムの取りうる値)
     - [物品履歴テーブル](#物品履歴テーブル)
       - [カラムの取りうる値](#カラムの取りうる値-1)
-      - [old\_value と new\_value](#old_value-と-new_value)
+      - [old_value と new_value](#old_value-と-new_value)
   - [ER 図](#er-図)
 
 ## データベース情報
@@ -99,7 +99,7 @@ category と category_index で PC100 のようなローカル番号を表す．
 | ---------------- | ----------------- | -------- | ------------------- | --- | --- | ------------ | --------- | ------------------- |
 | history_id       | 物品履歴 ID       | INTEGER  | 5001                | ○   |     | ○            |           | AUTO_INCREMENT      |
 | request_id       | リクエスト ID     | VARCHAR  | vdsainsdknskd       |     |     |              |           |                     |
-| request_type     | リクエスト種別    | ENUM     | assign              |     |     |              |           |                     |
+| request_type     | リクエスト種別    | ENUM     | regist              |     |     |              |           |                     |
 | response_status  | レスポンス        | ENUM     | success             |     |     |              |           |                     |
 | error_code       | エラーコード      | ENUM     | NOT_FOUND           |     |     |              |           |                     |
 | response_message | レスポンス        | VARCHAR  | "貸し出し成功"      |     |     |              |           |                     |
@@ -113,7 +113,7 @@ category と category_index で PC100 のようなローカル番号を表す．
 
 - request_type
 
-  - assign: 登録
+  - regist: 登録
   - update: 物品情報更新
   - lend: 貸し出し
   - return: 返却

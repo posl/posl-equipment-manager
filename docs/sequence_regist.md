@@ -47,10 +47,10 @@ sequenceDiagram
     Controller ->> DB: equipment_id = last_insert_id()
     alt category，category_indexのUNIQUE制約違反
         Controller ->> DB: ROLLBACK
-        Controller ->> DB: INSERT INTO equipment_history (request_id, equipment_id, request_type: assign, response_status, error_code, response_massage, old_value, new_value,changed_by: request_user_id, request_at) -- rejected: RULE_DUPLICATE_CATEGORY_INDEX
+        Controller ->> DB: INSERT INTO equipment_history (request_id, equipment_id, request_type: regist, response_status, error_code, response_massage, old_value, new_value,changed_by: request_user_id, request_at) -- rejected: RULE_DUPLICATE_CATEGORY_INDEX
         Controller ->> SlackApp: "{category}{category_index} は既に登録されています．"
     else 成功
-        Controller ->> DB: INSERT INTO equipment_history (request_id, equipment_id, request_type: assign, response_status, error_code, response_massage, old_value, new_value,changed_by: request_user_id, request_at) -- success: NONE
+        Controller ->> DB: INSERT INTO equipment_history (request_id, equipment_id, request_type: regist, response_status, error_code, response_massage, old_value, new_value,changed_by: request_user_id, request_at) -- success: NONE
         Controller ->> DB: COMMIT
         Controller ->> SlackApp: "{category}{category_index}: 登録"
         %% スプレッドシートは非同期で更新
