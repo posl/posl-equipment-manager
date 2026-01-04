@@ -1,3 +1,17 @@
+# Environment variables
 .env
-.venv
 
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+app/.venv
+
+
+# ./docs
+er_early.md
