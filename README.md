@@ -6,12 +6,13 @@
 
 ## 開発ドキュメント
 
-- [ER 図・DB 設計書](./docs/er.md)
-- [アーキテクチャ](./docs/architecture.md)
-- [貸出シーケンス](./docs/sequence_borrow.md)
-- [返却シーケンス](./docs/sequence_return.md)
-- [登録シーケンス](./docs/sequence_regist.md)
-- [情報更新シーケンス](./docs/sequence_update.md)
+- [ER 図・DB 設計書](./docs/er_diagram.md)
+- [アーキテクチャ図(未完)]()
+- [アーキテクチャ仕様書](./docs/architecture_document.md)
+- [貸出シーケンス](./docs/sequence_diagram_borrow.md)
+- [返却シーケンス](./docs/sequence_diagram_return.md)
+- [登録シーケンス](./docs/sequence_diagram_regist.md)
+- [情報更新シーケンス](./docs/sequence_diagram_update.md)
 
 ## 機能要件
 
