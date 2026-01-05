@@ -11,9 +11,9 @@
          ↓
    ユースケース層 (usecases)
          ↓
-    ドメイン層 (domain)
+     ドメイン層 (domain)
          ↑
-  インフラ層 (infrastructure)
+     インフラ層 (infrastructure)
 ```
 
 ## ディレクトリ構成（仮構成のため，変更の可能性あり）
@@ -51,21 +51,6 @@ app/
 │
 ├── usecases/                       # ユースケース層（アプリケーションロジック）
 │   ├── __init__.py
-│   ├── dtos/                       # データ転送オブジェクト（DTO）
-│   │   ├── __init__.py
-│   │   ├── lend_equipment_dto.py   # 貸出DTO（Input/Output）
-│   │   │   ├── LendEquipmentInput
-│   │   │   └── LendEquipmentOutput
-│   │   ├── return_equipment_dto.py # 返却DTO（Input/Output）
-│   │   │   ├── ReturnEquipmentInput
-│   │   │   └── ReturnEquipmentOutput
-│   │   ├── regist_equipment_dto.py # 登録DTO（Input/Output）
-│   │   │   ├── RegisterEquipmentInput
-│   │   │   └── RegisterEquipmentOutput
-│   │   └── update_equipment_dto.py # 更新DTO（Input/Output）
-│   │       ├── UpdateEquipmentInput
-│   │       └── UpdateEquipmentOutput
-│   │
 │   ├── lend_equipment.py           # 物品貸出ユースケース
 │   │   └── LendEquipmentUseCase
 │   ├── return_equipment.py         # 物品返却ユースケース
@@ -168,7 +153,6 @@ app/
 - **責務**: アプリケーション固有のビジネスルールを実装
 - **特徴**: ドメイン層のエンティティとリポジトリ抽象に依存（内側同士の依存）
 - **含まれるもの**:
-  - DTO（Data Transfer Object）：レイヤー間のデータ受け渡し用オブジェクト
   - 物品貸出ロジック（LendEquipmentUseCase）
   - 物品返却ロジック（ReturnEquipmentUseCase）
   - 物品登録ロジック（RegisterEquipmentUseCase）
@@ -242,19 +226,19 @@ app/
 <!-- ### 例1: Slashコマンドで貸出を受け付ける場合
 
 1. **入力**: Slack から `/lend` コマンドが呼ばれる（interfaces/slack/commands/lend_command.py）．
-2. **ハンドリング**: Slack ハンドラーがリクエストを受け取り，コマンド引数を `LendEquipmentInput` DTO に詰める（interfaces/slack/handler.py）．
-3. **ユースケース実行**: `LendEquipmentUseCase` が実行され，domain/repositories で定義された抽象リポジトリ越しにデータ取得・更新を行う．
-4. **インフラ呼び出し**: domain の抽象を実装した `SqliteEquipmentRepository` など（infrastructure/db/sqlite_repo.py）が実際の DB にアクセスし，結果を返す．
-5. **レスポンス整形**: ユースケースの結果 `LendEquipmentOutput` DTO を Slack メッセージ用のフォーマットに変換（interfaces/slack/messages/formatter.py）．
+2. **ハンドリング**: Slack ハンドラーがリクエストを受け取り，コマンド引数（equipment_id, user_id等）をパース（interfaces/slack/handler.py）。
+3. **ユースケース実行**: `LendEquipmentUseCase.execute(equipment_id, user_id)` が実行され，domain/repositories で定義された抽象リポジトリ越しにデータ取得・更新を行う。
+4. **インフラ呼び出し**: domain の抽象を実装した `SqliteEquipmentRepository` など（infrastructure/db/sqlite_repo.py）が実際の DB にアクセスし，結果を返す。
+5. **レスポンス整形**: ユースケースの結果（Equipment エンティティや成功フラグ）を Slack メッセージ用のフォーマットに変換（interfaces/slack/messages/formatter.py）。
 6. **出力**: Slack に応答を返す． -->
 
 ### 例 1: Slack Workflow Builder で貸出を受け付ける場合
 
 1. **入力**: Slack Workflow がトリガーされ，ワークフローステップイベントが発火（interfaces/slack/workflows/lend_workflow.py）．
-2. **ハンドリング**: Workflow ステップハンドラーがフォーム入力を受け取り，`LendEquipmentInput` DTO に詰める．
-3. **ユースケース実行**: `LendEquipmentUseCase` を呼び出し（Slash コマンドと同じユースケースを再利用）．
-4. **インフラ呼び出し**: 同様に domain の抽象を介して DB アクセス．
-5. **レスポンス整形**: `LendEquipmentOutput` DTO をワークフロー用の形式に変換（次のステップへ渡す，または完了通知）．
+2. **ハンドリング**: Workflow ステップハンドラーがフォーム入力を受け取り，パラメータ（equipment_id, user_id等）を抽出。
+3. **ユースケース実行**: `LendEquipmentUseCase.execute(equipment_id, user_id)` を呼び出し（Slashコマンドと同じユースケースを再利用）。
+4. **インフラ呼び出し**: 同様に domain の抽象を介して DB アクセス。
+5. **レスポンス整形**: ユースケースの結果をワークフロー用の形式に変換（次のステップへ渡す、または完了通知）。
 6. **出力**: ワークフローの次のステップに結果を渡す，または完了を通知．
 
 **ポイント**:
