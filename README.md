@@ -27,7 +27,7 @@
 
 ## アーキテクチャ図
 
-![アーキテクチャ図](./docs/architecture_diagram.pdf)
+![アーキテクチャ図](./docs/architecture_diagram.png)
 
 ## データベース設計
 

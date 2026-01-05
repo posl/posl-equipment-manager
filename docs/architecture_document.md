@@ -3,7 +3,8 @@
 ## 概要
 
 本プロジェクトは，クリーンアーキテクチャに基づいて設計されている．
-![アーキテクチャ図](./architecture_diagram.pdf)
+
+![アーキテクチャ図](./architecture_diagram.png)
 
 ## アーキテクチャレイヤー
 
