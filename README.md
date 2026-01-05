@@ -7,7 +7,6 @@
 ## 開発ドキュメント
 
 - [ER 図・DB 設計書](./docs/er_diagram.md)
-- [アーキテクチャ図(未完)]()
 - [アーキテクチャ仕様書](./docs/architecture_document.md)
 - [貸出シーケンス](./docs/sequence_diagram_borrow.md)
 - [返却シーケンス](./docs/sequence_diagram_return.md)
@@ -25,6 +24,10 @@
 
 - Slack から物品を削除する
 - Slack から物品の発注依頼を行う
+
+## アーキテクチャ図
+
+![アーキテクチャ図](./docs/architecture_diagram.pdf)
 
 ## データベース設計
 
