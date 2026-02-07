@@ -4,14 +4,15 @@
   - [データベース情報](#データベース情報)
   - [テーブル定義](#テーブル定義)
     - [ユーザー情報テーブル](#ユーザー情報テーブル)
+      - [カラムの取りうる値](#カラムの取りうる値)
     - [物品カテゴリテーブル](#物品カテゴリテーブル)
     - [予算テーブル](#予算テーブル)
     - [物品テーブル](#物品テーブル)
-      - [\* category と category_index のユニーク制約](#-category-と-category_index-のユニーク制約)
-      - [カラムの取りうる値](#カラムの取りうる値)
-    - [物品履歴テーブル](#物品履歴テーブル)
+      - [\* category と category\_index のユニーク制約](#-category-と-category_index-のユニーク制約)
       - [カラムの取りうる値](#カラムの取りうる値-1)
-      - [old_value と new_value](#old_value-と-new_value)
+    - [物品履歴テーブル](#物品履歴テーブル)
+      - [カラムの取りうる値](#カラムの取りうる値-2)
+      - [old\_value と new\_value](#old_value-と-new_value)
   - [ER 図](#er-図)
 
 ## データベース情報
@@ -27,12 +28,19 @@
 - **論理名**: ユーザー情報
 - **物理名**: USERS
 
-| カラム物理名  | カラム論理名        | データ型 | 凡例        | PK  | FK  | ユニーク制約 | NULL 許可 | 備考           |
-| ------------- | ------------------- | -------- | ----------- | --- | --- | ------------ | --------- | -------------- |
-| user_id       | ユーザー ID         | INTEGER  | 1           | ○   |     | ○            |           | AUTO_INCREMENT |
-| slack_user_id | Slack のユーザー ID | VARCHAR  | geboi215ngo |     |     | ○            |           |                |
-| slack_name    | Slack の表示名      | VARCHAR  | Yuki Toi    |     |     |              |           |                |
-| real_name     | 実名                | VARCHAR  | 戸井裕規    |     |     |              |           |                |
+| カラム物理名  | カラム論理名        | データ型 | 凡例         | PK  | FK  | ユニーク制約 | NULL 許可 | 備考 |
+| ------------- | ------------------- | -------- | ------------ | --- | --- | ------------ | --------- | ---- |
+| user_id       | ユーザー ID         | UUID     | 長いので省略 | ○   |     | ○            |           |      |
+| slack_user_id | Slack のユーザー ID | VARCHAR  | geboi        |     |     | ○            |           |      |
+| slack_name    | Slack の表示名      | VARCHAR  | Taro Kyudai  |     |     |              |           |      |
+| real_name     | 実名                | VARCHAR  | 九大太郎     |     |     |              |           |      |
+| role          | 役割                | ENUM     | admin        |     |     |              |           |      |
+
+#### カラムの取りうる値
+
+- role
+  - admin: 管理者
+  - user: 一般ユーザー
 
 ### 物品カテゴリテーブル
 
@@ -49,10 +57,10 @@
 - **論理名**: 予算
 - **物理名**: BUDGETS
 
-| カラム物理名 | カラム論理名 | データ型 | 凡例       | PK  | FK  | ユニーク制約 | NULL 許可 | 備考           |
-| ------------ | ------------ | -------- | ---------- | --- | --- | ------------ | --------- | -------------- |
-| budget_id    | 予算 ID      | INTEGER  | 1          | ○   |     |              |           | AUTO_INCREMENT |
-| name         | 予算名       | VARCHAR  | 共同研究 A |     |     |              |           |                |
+| カラム物理名 | カラム論理名 | データ型 | 凡例         | PK  | FK  | ユニーク制約 | NULL 許可 | 備考 |
+| ------------ | ------------ | -------- | ------------ | --- | --- | ------------ | --------- | ---- |
+| budget_id    | 予算 ID      | UUID     | 長いので省略 | ○   |     |              |           |      |
+| name         | 予算名       | VARCHAR  | 共同研究 A   |     |     |              |           |      |
 
 ### 物品テーブル
 
@@ -61,14 +69,14 @@
 
 | カラム物理名   | カラム論理名       | データ型 | 凡例                | PK  | FK  | ユニーク制約 | NULL 許可 | 備考                |
 | -------------- | ------------------ | -------- | ------------------- | --- | --- | ------------ | --------- | ------------------- |
-| equipment_id   | 物品 ID            | INTEGER  | 1                   | ○   |     | ○            |           | AUTO_INCREMENT      |
+| equipment_id   | 物品 ID            | UUID     | 長いので省略        | ○   |     | ○            |           |                     |
 | category       | カテゴリコード     | CHAR     | PC                  |     | ○   | ○\*          |           |                     |
 | category_index | カテゴリ内管理番号 | INTEGER  | 12                  |     |     | ○\*          |           |                     |
 | name           | 物品名/型番        | VARCHAR  | MacBook Pro 14      |     |     |              |           |                     |
 | type           | 種別               | VARCHAR  | ノート PC           |     |     |              |           |                     |
-| user_id        | 使用者 ID          | INTEGER  | 2                   |     | ○   |              | ○         |                     |
-| manager_id     | 管理者 ID          | INTEGER  | 1                   |     | ○   |              | ○         |                     |
-| budget_id      | 予算 ID            | INTEGER  | 3                   |     | ○   |              | ○         |                     |
+| user_id        | 使用者 ID          | UUID     | 長いので省略        |     | ○   |              | ○         |                     |
+| manager_id     | 管理者 ID          | UUID     | 長いので省略        |     | ○   |              | ○         |                     |
+| budget_id      | 予算 ID            | UUID     | 長いので省略        |     | ○   |              | ○         |                     |
 | public_id      | 資産管理番号       | VARCHAR  | ASSET-2023-001      |     |     | ○            | ○         |                     |
 | purchase_date  | 購入日             | DATE     | 2023-04-01          |     |     |              | ○         |                     |
 | warranty_end   | 補償期限           | DATE     | 2026-04-01          |     |     |              | ○         |                     |
@@ -97,38 +105,34 @@ category と category_index で PC100 のようなローカル番号を表す．
 
 | カラム物理名     | カラム論理名      | データ型 | 凡例                | PK  | FK  | ユニーク制約 | NULL 許可 | 備考                |
 | ---------------- | ----------------- | -------- | ------------------- | --- | --- | ------------ | --------- | ------------------- |
-| history_id       | 物品履歴 ID       | INTEGER  | 5001                | ○   |     | ○            |           | AUTO_INCREMENT      |
+| history_id       | 物品履歴 ID       | UUID     | 長いので省略        | ○   |     | ○            |           |                     |
 | request_id       | リクエスト ID     | VARCHAR  | vdsainsdknskd       |     |     |              |           |                     |
 | request_type     | リクエスト種別    | ENUM     | regist              |     |     |              |           |                     |
 | response_status  | レスポンス        | ENUM     | success             |     |     |              |           |                     |
 | error_code       | エラーコード      | ENUM     | NOT_FOUND           |     |     |              |           |                     |
 | response_message | レスポンス        | VARCHAR  | "貸し出し成功"      |     |     |              |           |                     |
 | equipment_id     | 物品 ID           | INTEGER  | 3                   |     | ○   |              | ○         |                     |
-| old_value        | 変更前情報        | TEXT     | 下記参照            |     |     |              |           |                     |
-| new_value        | 変更後情報        | TEXT     | 下記参照            |     |     |              |           |                     |
+| old_value        | 変更前情報        | JSONB    | 下記参照            |     |     |              |           |                     |
+| new_value        | 変更後情報        | JSONB    | 下記参照            |     |     |              |           |                     |
 | changed_by       | 操作者ユーザー ID | INTEGER  | 1                   |     | ○   |              | ○         |                     |
 | request_at       | 変更日時          | DATETIME | 2023-05-01 10:00:00 |     |     |              |           | yyyy-mm-dd hh:mm:ss |
 
 #### カラムの取りうる値
 
 - request_type
-
   - regist: 登録
   - update: 物品情報更新
   - lend: 貸し出し
   - return: 返却
   - break: 故障 or 廃棄予定
   - dispose: 廃棄
-  - sync: DB <-> スプレッドシート間の同期
 
 - response_status
-
   - success : リクエストが正常に完了
   - rejected : ルール上の拒否（状態変更なし）
   - error : システムエラーにより，当該 request_type の完了が保証できない状態
 
 - error_code (RULE: 運用ルール上のエラー，SYS: システム上のエラー)
-
   - NONE: エラーなし
   - RULE_NOT_FOUND: 物品が見つからない
   - RULE_ALREADY BORROWED: 物品貸し出しリクエストの際，すでに貸し出しされている
@@ -136,15 +140,17 @@ category と category_index で PC100 のようなローカル番号を表す．
   - RULE_NOT_OWNER: 現在の使用者による返却リクエストではない
   - RULE_VALIDATION_ERROR: 登録内容の不備
   - RULE_DUPLICATE_CATEGORY_INDEX: すでに登録されている物品を登録しようとした
+  - RULE_STILL_BORROWED: 物品廃棄リクエストなどの際，物品が使用中である
+  - RULE_NOT_BROKEN: 物品廃棄リクエストの際，物品が故障 or 廃棄予定ではない
+  - RULE_ALREADY_DISPOSED: 物品廃棄リクエストなどの際，物品がすでに廃棄済みである
   - SYS_DB_ERROR: データベースエラー
-  - SYS_SHEET_SYNC_ERROR: スプレッドシート -> データベースの同期に失敗
 
 - response_message
   - レスポンスメッセージを人間チェック用に格納
 
 #### old_value と new_value
 
-更新前後で差分のある物品情報だけを JSON として格納する
+更新前後で差分のある物品情報だけを JSON として格納する．物品登録の際は，全ての物品情報を new_value に格納し，old_value は NULL とする．
 
 - old_value (new_value)
   - status (string): borrowed
