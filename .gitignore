@@ -12,6 +12,8 @@ wheels/
 # Virtual environments
 app/.venv
 
-
 # ./docs
 er_early.md
+
+# MacOS files
+.DS_Store
