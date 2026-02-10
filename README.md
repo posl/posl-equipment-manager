@@ -82,3 +82,7 @@ TypeScript 一本でフロント・バック・DB 操作を完結させ，型安
    - CI パイプライン（GitHub Actions 等）の構築
 6. **本番移行**
    - 研究室内サーバーへの Docker デプロイとバックアップ体制の構築
+
+## 開発ルール・運用
+
+- [開発・レビュー運用ガイドライン](docs/development-guidelines.md)
