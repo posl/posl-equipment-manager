@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  userId             String             @id @default(uuid()) @db.Uuid
+  slackUserId        String             @unique @db.VarChar(255)
+  slackName          String             @db.VarChar(255)
+  realName           String             @db.VarChar(255)
+  role               Role               @default(USER)
+  equipment          Equipment[]        @relation("UserEquipment")
+  managedEquipment   Equipment[]        @relation("ManagerEquipment")
+  equipmentHistories EquipmentHistory[]
+}
+
+model EquipmentCategory {
+  code      String      @id @db.Char(10)
+  name      String      @db.VarChar(255)
+  equipment Equipment[]
+}
+
+model Budget {
+  budgetId  String      @id @default(uuid()) @db.Uuid
+  name      String      @db.VarChar(255)
+  equipment Equipment[]
+}
+
+model Equipment {
+  equipmentId        String             @id @default(uuid()) @db.Uuid
+  category           EquipmentCategory  @relation(fields: [categoryCode], references: [code])
+  categoryCode       String             @db.Char(10)
+  categoryIndex      Int                @db.Integer
+  name               String             @db.VarChar(255)
+  type               String             @db.VarChar(255)
+  user               User?              @relation("UserEquipment", fields: [userId], references: [userId])
+  userId             String?            @db.Uuid
+  manager            User?              @relation("ManagerEquipment", fields: [managerId], references: [userId])
+  managerId          String?            @db.Uuid
+  budget             Budget?            @relation(fields: [budgetId], references: [budgetId])
+  budgetId           String?            @db.Uuid
+  publicId           String?            @unique @db.VarChar(255)
+  purchaseDate       DateTime?          @db.Date
+  warrantyEnd        DateTime?          @db.Date
+  location           String?            @db.VarChar(255)
+  status             Status             @default(AVAILABLE)
+  remarks            String?            @db.Text
+  createdAt          DateTime           @default(now()) @db.Timestamptz()
+  updatedAt          DateTime           @default(now()) @db.Timestamptz()
+  equipmentHistories EquipmentHistory[]
+
+  @@unique([categoryCode, categoryIndex])
+}
+
+model EquipmentHistory {
+  historyId       String         @id @default(uuid()) @db.Uuid
+  requestId       String         @db.VarChar(255)
+  requestType     RequestType
+  responseStatus  ResponseStatus
+  errorCode       ErrorCode      @default(NONE)
+  responseMessage String?        @db.VarChar(255)
+  equipment       Equipment      @relation(fields: [equipmentId], references: [equipmentId])
+  equipmentId     String         @db.Uuid
+  oldValue        Json?          @db.JsonB
+  newValue        Json           @db.JsonB
+  changedUser     User           @relation(fields: [changedBy], references: [userId])
+  changedBy       String         @db.Uuid
+  requestedAt     DateTime       @default(now()) @db.Timestamptz()
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Status {
+  AVAILABLE
+  BORROWED
+  BROKEN
+  DISPOSED
+}
+
+enum RequestType {
+  REGIST
+  UPDATE
+  LEND
+  RETURN
+  BREAK
+  DISPOSE
+}
+
+enum ResponseStatus {
+  SUCCESS
+  REJECTED
+  ERROR
+}
+
+enum ErrorCode {
+  NONE
+  RULE_NOT_FOUND
+  RULE_ALREADY_BORROWED
+  RULE_NOT_BORROWED
+  RULE_NOT_OWNER
+  RULE_VALIDATION_ERROR
+  RULE_DUPLICATE_CATEGORY_INDEX
+  RULE_STILL_BORROWED
+  RULE_NOT_BROKEN
+  RULE_ALREADY_DISPOSED
+  SYS_DB_ERROR
+}
