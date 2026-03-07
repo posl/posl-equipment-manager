@@ -10,8 +10,11 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
-    "lint": "biome check",
-    "format": "biome format --write"
+    "lint": "biome check --error-on-warnings",
+    "lint:fix": "biome check --fix --error-on-warnings",
+    "format": "biome format --write --write --error-on-warnings",
+    "typecheck": "next typegen && tsc --noEmit",
+    "clean": "git clean -xdf node_modules dist .next"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.0",
