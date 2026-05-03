@@ -1,0 +1,65 @@
+{
+  "compilerOptions": {
+    /* プロジェクト */
+    "incremental": true, // 差分型チェック（`.tsbuildinfo` を使ってビルドを高速化）
+    "tsBuildInfoFile": ".tsbuildinfo",
+    /* 言語と環境 */
+    "target": "es2024", // トランスパイル先の構文レベル
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "ES2024"
+    ], // 使用可能な組み込みAPI（ブラウザ環境と最新JS機能を含む）
+    "jsx": "react-jsx", // JSX構文をそのまま出力（SWCやBabelで後から処理）
+    "moduleDetection": "force", // 明示的にモジュールと判断するルール（ファイル単位で制御）
+    /* モジュール */
+    "module": "esnext", // 出力されるモジュール形式（import/exportを維持）
+    "moduleResolution": "bundler", // バンドラ向けのモジュール解決（Node.jsスタイルではない）
+    "baseUrl": "./", // ルートディレクトリ
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+    "resolveJsonModule": true, // .json ファイルを import できるようにする
+    /* JavaScript サポート */
+    "allowJs": true, // JS ファイルを TypeScript プロジェクト内で許可
+    "checkJs": true, // JS ファイルにも型チェックを適用
+    /* Emit */
+    "noEmit": true,
+    /* システム連携の制約事項 */
+    "esModuleInterop": true, // CommonJS のモジュールを ESModules としてインポート可能にする
+    "isolatedModules": true, // 各ファイルを独立して変換可能にする（SWCなどに必要）
+    "verbatimModuleSyntax": true, // import/export の構文を変更せずそのまま出力
+    "forceConsistentCasingInFileNames": true, // ファイル名の大文字・小文字の不一致を許さない（OS間の差異対策）
+    /* 型チェック */
+    "strict": true, // 厳密な型チェックをすべて有効にする
+    "noFallthroughCasesInSwitch": true, // switch文の意図しないfallthrough（次のcaseへの抜け）を禁止
+    "noUncheckedIndexedAccess": true, // 配列・オブジェクトの要素アクセスをより厳密にチェック
+    /* 完全性 */
+    "skipLibCheck": true,
+    /* プラグイン */
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  /* 型チェックの対象ファイル */
+  "include": [
+    "next-env.d.ts", // Next.js 環境用型定義ファイル（必須）
+    "**/*.ts", // すべての TypeScript ファイル
+    "**/*.tsx", // JSX を含む TypeScript ファイル
+    "**/*.mts", // ESM 形式の TypeScript ファイル
+    "**/*.cjs", // CommonJS 形式の JS ファイル
+    "**/*.mjs", // ESM 形式の JS ファイル
+    "**/*.js", // 通常の JavaScript ファイル
+    ".next/types/**/*.ts", // Next.js の内部型定義
+    ".next/dev/types/**/*.ts" // Next.js 開発時の型定義
+  ],
+  "exclude": [
+    "node_modules",
+    ".next",
+    "dist"
+  ] /// npm の依存ファイルは除外
+}
