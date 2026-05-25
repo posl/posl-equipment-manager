@@ -48,6 +48,10 @@ studio: ## Prisma Studioを起動
 lint: ## コードのリントを実行
 	docker compose exec app npm run lint
 
+.PHONY: lint-fix
+lint-fix: ## コードのリントを自動修正
+	docker compose exec app npm run lint:fix
+
 .PHONY: format
 format: ## コードのフォーマットを実行
 	docker compose exec app npm run format
